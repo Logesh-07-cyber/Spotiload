@@ -26,9 +26,12 @@
 
 ---
 
+
 ## 📸 Preview
 
-<img src="https://via.placeholder.com/800x400?text=SpotiLoad+Preview" />
+<p align="center">
+  <img src="./preview.png" width="800"/>
+</p>
 
 ---
 
