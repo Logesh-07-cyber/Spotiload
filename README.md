@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://capsule-render.vercel.app/api?type=venom&color=0:1DB954,100:000000&height=250&section=header&text=SpotiLoad%20🎵&fontSize=55&fontColor=ffffff&animation=twinkling&fontAlignY=40" />
+</p>
+
 <h1 align="center">🎵 SpotiLoad</h1>
 <p align="center">
   <b>Spotify Track Downloader 🚀</b><br>
