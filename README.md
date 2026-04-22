@@ -47,7 +47,7 @@ cd Spotiload
 ## 👨‍💻 Connect with me
 
 <p align="center">
-  <a href="https://www.linkedin.com/in/k-logesh-prasanna-ba3b703a9/">
+  <a href="https://www.linkedin.com/in/k-logesh-prasanna-cyber/">
     <img src="https://skillicons.dev/icons?i=linkedin" height="40"/>
   </a>
   <a href="https://github.com/Logesh-07-cyber">
