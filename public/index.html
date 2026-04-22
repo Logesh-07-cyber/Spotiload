@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SpotiLoad — Spotify Downloader</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green: #1DB954;
+      --black: #0a0a0a;
+      --surface: #111111;
+      --card: #181818;
+      --border: #2a2a2a;
+      --text: #f0f0f0;
+      --muted: #888;
+      --font-display: 'Syne', sans-serif;
+      --font-mono: 'DM Mono', monospace;
+    }
+
+    body {
+      background: var(--black);
+      color: var(--text);
+      font-family: var(--font-display);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 3rem 1.5rem 5rem;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(29,185,84,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(29,185,84,0.04) 1px, transparent 1px);
+      background-size: 44px 44px;
+      pointer-events: none; z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: fixed; top: -120px; left: 50%; transform: translateX(-50%);
+      width: 700px; height: 400px;
+      background: radial-gradient(ellipse, rgba(29,185,84,0.12) 0%, transparent 70%);
+      pointer-events: none; z-index: 0;
+    }
+
+    .wrapper {
+      position: relative; z-index: 1;
+      width: 100%; max-width: 680px;
+      display: flex; flex-direction: column; gap: 2rem;
+    }
+
+    header { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; padding-bottom: 1rem; }
+    .logo-row { display: flex; align-items: center; gap: 0.75rem; }
+
+    .logo-icon {
+      width: 46px; height: 46px;
+      background: var(--green); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 28px rgba(29,185,84,0.45);
+      animation: pulse 3s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { box-shadow: 0 0 28px rgba(29,185,84,0.45); }
+      50%      { box-shadow: 0 0 50px rgba(29,185,84,0.7); }
+    }
+    .logo-icon svg { width: 26px; height: 26px; }
+
+    h1 { font-size: clamp(2rem,6vw,2.8rem); font-weight: 800; letter-spacing: -1px; }
+    h1 span { color: var(--green); }
+    .tagline { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; }
+
+    .steps { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .step {
+      flex: 1; min-width: 140px;
+      background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+      padding: 1rem; display: flex; flex-direction: column; gap: 0.4rem;
+    }
+    .step-num  { font-size: 0.68rem; font-family: var(--font-mono); color: var(--green); letter-spacing: 0.1em; }
+    .step-text { font-size: 0.82rem; color: var(--muted); line-height: 1.4; }
+
+    .search-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+      padding: 2rem 1.8rem; display: flex; flex-direction: column; gap: 1.2rem;
+    }
+    .search-card label { font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); font-family: var(--font-mono); }
+
+    .url-input-wrap { position: relative; display: flex; align-items: center; }
+    .url-input-wrap input { width: 100%; padding-right: 3rem; }
+
+    input[type="text"] {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+      padding: 0.75rem 1rem; color: var(--text);
+      font-family: var(--font-mono); font-size: 0.85rem;
+      outline: none; transition: border-color 0.2s, box-shadow 0.2s; width: 100%;
+    }
+    input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(29,185,84,0.12); }
+    input::placeholder { color: #444; }
+
+    .clear-btn {
+      position: absolute; right: 0.75rem;
+      background: none; border: none; color: var(--muted);
+      cursor: pointer; font-size: 1.1rem; padding: 4px;
+      border-radius: 4px; transition: color 0.2s; display: none;
+    }
+    .clear-btn:hover { color: var(--text); }
+    .clear-btn.visible { display: block; }
+
+    .btn-primary {
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+      background: var(--green); color: #000; border: none; border-radius: 10px;
+      padding: 0.85rem 1.5rem; font-family: var(--font-display);
+      font-size: 0.95rem; font-weight: 700; cursor: pointer;
+      transition: background 0.2s, transform 0.1s, box-shadow 0.2s; letter-spacing: 0.02em;
+    }
+    .btn-primary:hover { background: #22d160; box-shadow: 0 4px 20px rgba(29,185,84,0.4); transform: translateY(-1px); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { background: #1a4a2a; color: #3a8a50; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2.5px solid rgba(0,0,0,0.3); border-top-color: #000;
+      border-radius: 50%; animation: spin 0.7s linear infinite; display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .message-box {
+      border-radius: 10px; padding: 0.9rem 1.1rem;
+      font-family: var(--font-mono); font-size: 0.82rem;
+      display: none; animation: slideUp 0.3s ease;
+    }
+    .message-box.visible { display: block; }
+    .message-box.error { background: rgba(220,50,50,0.1); border: 1px solid rgba(220,50,50,0.25); color: #f87171; }
+    .message-box.info  { background: rgba(29,185,84,0.08); border: 1px solid rgba(29,185,84,0.2);  color: #6ee7a0; }
+
+    .result-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; overflow: hidden;
+      display: none; animation: slideUp 0.4s cubic-bezier(0.16,1,0.3,1);
+    }
+    @keyframes slideUp {
+      from { opacity:0; transform:translateY(24px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    .result-card.visible { display: block; }
+
+    .result-header { display: flex; gap: 1rem; padding: 1.4rem 1.6rem; align-items: center; border-bottom: 1px solid var(--border); }
+    .thumb-wrap img { width: 80px; height: 80px; border-radius: 8px; object-fit: cover; display: block; }
+    .thumb-placeholder {
+      width: 80px; height: 80px; border-radius: 8px;
+      background: linear-gradient(135deg,#1a2a1a,#0d1f0d);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .track-meta { flex: 1; min-width: 0; }
+    .track-title  { font-size: 1.1rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .track-artist { font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); margin-top: 0.3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .track-duration { font-family: var(--font-mono); font-size: 0.75rem; color: var(--green); margin-top: 0.5rem; display: flex; align-items: center; gap: 0.4rem; }
+
+    .preview-section { padding: 1.2rem 1.6rem; border-bottom: 1px solid var(--border); display: none; }
+    .preview-section.visible { display: block; }
+    .preview-label { font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); font-family: var(--font-mono); margin-bottom: 0.75rem; }
+    audio { width: 100%; height: 36px; accent-color: var(--green); }
+
+    .download-section { padding: 1.2rem 1.6rem; }
+    .quality-label { font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); font-family: var(--font-mono); margin-bottom: 0.9rem; }
+    .download-options { display: flex; flex-direction: column; gap: 0.6rem; }
+
+    .download-btn {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+      padding: 0.85rem 1.2rem; color: var(--text); text-decoration: none;
+      font-family: var(--font-display); font-size: 0.88rem; font-weight: 600;
+      transition: border-color 0.2s, background 0.2s, transform 0.1s;
+    }
+    .download-btn:hover { border-color: var(--green); background: rgba(29,185,84,0.06); transform: translateX(3px); }
+    .download-btn-left { display: flex; align-items: center; gap: 0.7rem; }
+    .quality-badge { font-family: var(--font-mono); font-size: 0.7rem; background: rgba(29,185,84,0.15); color: var(--green); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(29,185,84,0.2); }
+    .dl-icon { color: var(--green); font-size: 1.1rem; }
+
+    footer { text-align: center; font-family: var(--font-mono); font-size: 0.7rem; color: #444; padding-top: 1rem; }
+
+    @media (max-width: 480px) {
+      .result-header { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+
+  <header>
+    <div class="logo-row">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="white"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.586 14.424a.622.622 0 01-.857.207c-2.348-1.435-5.304-1.76-8.785-.964a.623.623 0 11-.277-1.216c3.809-.87 7.077-.496 9.712 1.116a.623.623 0 01.207.857zm1.223-2.722a.78.78 0 01-1.072.257c-2.687-1.652-6.785-2.131-9.965-1.166a.78.78 0 01-.973-.519.78.78 0 01.519-.972c3.632-1.102 8.147-.568 11.234 1.328a.779.779 0 01.257 1.072zm.105-2.835C14.69 9.019 9.574 8.847 6.538 9.77a.935.935 0 11-.543-1.79c3.483-1.057 9.276-.853 12.937 1.35a.934.934 0 11-.957 1.607l-.061-.07z"/></svg>
+      </div>
+      <h1>Spoti<span>Load</span></h1>
+    </div>
+    <p class="tagline">// Spotify Track Downloader</p>
+  </header>
+
+  <div class="steps">
+    <div class="step"><span class="step-num">01 // COPY</span><span class="step-text">Copy any Spotify track link from the app or web player</span></div>
+    <div class="step"><span class="step-num">02 // PASTE</span><span class="step-text">Paste the Spotify URL into the input below</span></div>
+    <div class="step"><span class="step-num">03 // DOWNLOAD</span><span class="step-text">Hit the button and download your track as MP3</span></div>
+  </div>
+
+  <div class="search-card">
+    <label>🎵 Spotify Track URL</label>
+    <div class="url-input-wrap">
+      <input type="text" id="spotifyUrl" placeholder="https://open.spotify.com/track/…" oninput="onUrlInput(this)"/>
+      <button class="clear-btn" id="clearBtn" onclick="clearUrl()">✕</button>
+    </div>
+    <button class="btn-primary" id="fetchBtn" onclick="fetchTrack()">
+      <div class="spinner" id="spinner"></div>
+      <span id="fetchLabel">⬇ Fetch &amp; Download</span>
+    </button>
+    <div id="errorBox" class="message-box error"></div>
+    <div id="infoBox"  class="message-box info"></div>
+  </div>
+
+  <div class="result-card" id="resultCard">
+    <div class="result-header">
+      <div class="thumb-wrap">
+        <img id="albumArt" src="" alt="" style="display:none"/>
+        <div class="thumb-placeholder" id="thumbPlaceholder">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="rgba(29,185,84,0.4)"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.586 14.424a.622.622 0 01-.857.207c-2.348-1.435-5.304-1.76-8.785-.964a.623.623 0 11-.277-1.216c3.809-.87 7.077-.496 9.712 1.116a.623.623 0 01.207.857zm1.223-2.722a.78.78 0 01-1.072.257c-2.687-1.652-6.785-2.131-9.965-1.166a.78.78 0 01-.973-.519.78.78 0 01.519-.972c3.632-1.102 8.147-.568 11.234 1.328a.779.779 0 01.257 1.072zm.105-2.835C14.69 9.019 9.574 8.847 6.538 9.77a.935.935 0 11-.543-1.79c3.483-1.057 9.276-.853 12.937 1.35a.934.934 0 11-.957 1.607l-.061-.07z"/></svg>
+        </div>
+      </div>
+      <div class="track-meta">
+        <div class="track-title"  id="trackTitle">—</div>
+        <div class="track-artist" id="trackArtist">—</div>
+        <div class="track-duration" id="trackDuration" style="display:none"><span>⏱</span><span id="durationVal">—</span></div>
+      </div>
+    </div>
+    <div class="preview-section" id="previewSection">
+      <div class="preview-label">🎧 30-sec Preview</div>
+      <audio id="audioPreview" controls></audio>
+    </div>
+    <div class="download-section">
+      <div class="quality-label">⬇ Download Options</div>
+      <div class="download-options" id="downloadOptions"></div>
+    </div>
+  </div>
+
+  <footer>Powered by RapidAPI · For personal &amp; educational use only</footer>
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+
+  function showError(msg) {
+    $('errorBox').textContent = '⚠ ' + msg;
+    $('errorBox').classList.add('visible');
+    $('infoBox').classList.remove('visible');
+  }
+  function clearMessages() {
+    $('errorBox').classList.remove('visible');
+    $('infoBox').classList.remove('visible');
+  }
+  function setLoading(on) {
+    $('fetchBtn').disabled = on;
+    $('spinner').style.display = on ? 'block' : 'none';
+    $('fetchLabel').textContent = on ? 'Fetching…' : '⬇ Fetch & Download';
+  }
+  function onUrlInput(el) {
+    $('clearBtn').classList.toggle('visible', el.value.length > 0);
+  }
+  function clearUrl() {
+    $('spotifyUrl').value = '';
+    $('clearBtn').classList.remove('visible');
+    $('resultCard').classList.remove('visible');
+    clearMessages();
+  }
+  function msToTime(ms) {
+    const s = Math.floor(ms / 1000), m = Math.floor(s / 60);
+    return `${m}:${(s % 60).toString().padStart(2,'0')}`;
+  }
+  function extractTrackId(url) {
+    const patterns = [
+      /open\.spotify\.com\/track\/([a-zA-Z0-9]+)/,
+      /spotify:track:([a-zA-Z0-9]+)/,
+    ];
+    for (const p of patterns) { const m = url.match(p); if (m) return m[1]; }
+    return null;
+  }
+
+  async function fetchTrack() {
+    clearMessages();
+    $('resultCard').classList.remove('visible');
+
+    const url = $('spotifyUrl').value.trim();
+    if (!url) { showError('Please paste a Spotify track URL.'); return; }
+
+    const trackId = extractTrackId(url);
+    if (!trackId) { showError('Invalid Spotify URL. Use: https://open.spotify.com/track/…'); return; }
+
+    setLoading(true);
+    try {
+      // Calls our local proxy server — no CORS issues!
+      const res = await fetch(`/api/download?trackId=${encodeURIComponent(trackId)}`);
+      const data = await res.json();
+
+      if (!res.ok || data.success === false) {
+        throw new Error(data?.message || `Error ${res.status}`);
+      }
+
+      renderResult(data);
+    } catch (err) {
+      console.error(err);
+      showError(err.message || 'Unexpected error — check the console.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function renderResult(data) {
+    const d = data.data || data;
+
+    const title      = d.title       || d.name       || 'Unknown Track';
+    const artist     = d.artist      || d.artists    || 'Unknown Artist';
+    const cover      = d.cover       || d.album_art  || d.thumbnail || '';
+    const durationMs = d.duration_ms || d.duration   || null;
+    const preview    = d.preview_url || d.previewUrl || '';
+    const dlUrl = d.downloadLink || d.download_url || d.downloadUrl || d.url || '';
+    const dlUrl128   = d.download_url_128 || dlUrl;
+    const dlUrl320   = d.download_url_320 || '';
+
+    if (cover) {
+      $('albumArt').src = cover; $('albumArt').style.display = 'block';
+      $('thumbPlaceholder').style.display = 'none';
+    } else {
+      $('albumArt').style.display = 'none'; $('thumbPlaceholder').style.display = 'flex';
+    }
+
+    $('trackTitle').textContent  = title;
+    $('trackArtist').textContent = artist;
+
+    if (durationMs) { $('durationVal').textContent = msToTime(durationMs); $('trackDuration').style.display = 'flex'; }
+    else              { $('trackDuration').style.display = 'none'; }
+
+    if (preview) { $('audioPreview').src = preview; $('previewSection').classList.add('visible'); }
+    else          { $('previewSection').classList.remove('visible'); }
+
+    const opts = $('downloadOptions');
+    opts.innerHTML = '';
+    const safeTitle = title.replace(/[^a-z0-9_\-]/gi,'_');
+
+    function makeBtn(label, quality, href) {
+      if (!href) return;
+      const a = document.createElement('a');
+      a.className = 'download-btn';
+      a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer';
+      a.download = `${safeTitle}.mp3`;
+      a.innerHTML = `
+        <span class="download-btn-left">
+          <span class="dl-icon">⬇</span>
+          <span>${label}</span>
+          <span class="quality-badge">${quality}</span>
+        </span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+          <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+        </svg>`;
+      opts.appendChild(a);
+    }
+
+    if (dlUrl320) makeBtn('High Quality MP3',     '320 kbps', dlUrl320);
+    if (dlUrl128) makeBtn('Standard Quality MP3', '128 kbps', dlUrl128);
+    if (!dlUrl128 && !dlUrl320 && dlUrl) makeBtn('Download MP3','MP3', dlUrl);
+
+    if (opts.childElementCount === 0) {
+      opts.innerHTML = '<p style="color:var(--muted);font-family:var(--font-mono);font-size:0.82rem;">No download link returned by the API for this track.</p>';
+    }
+
+    $('resultCard').classList.add('visible');
+    $('resultCard').scrollIntoView({ behavior:'smooth', block:'nearest' });
+  }
+
+  $('spotifyUrl').addEventListener('keydown', e => { if (e.key === 'Enter') fetchTrack(); });
+</script>
+</body>
+</html>
